@@ -4,5 +4,5 @@ pytest==9.1.1
 structlog==26.1.0
 detoxify==0.5.2
 presidio-analyzer==2.2.363
-httpx==0.28.1
+httpx2==2.9.1
 spacy==3.8.7

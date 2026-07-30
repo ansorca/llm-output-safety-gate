@@ -10,7 +10,7 @@ def client():
 def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "OK"}
+    assert response.json() == {"status": "ok"}
 
 def test_toxic_input_is_flagged(client):
     response = client.post("/check", json={"text": "I hate you"})
