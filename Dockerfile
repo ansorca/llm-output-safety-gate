@@ -20,8 +20,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ENV TORCH_HOME=/app/.cache
 ENV HF_HOME=/app/.cache/huggingface
 ENV SPACY_MODEL=en_core_web_sm
+ENV TLDEXTRACT_CACHE=/app/.cache/tldextract
 RUN python -c "from detoxify import Detoxify; Detoxify('multilingual')"
 RUN python -m spacy download ${SPACY_MODEL}
+RUN python -c "import tldextract; tldextract.extract('example.com')"
 
 USER appuser
 
