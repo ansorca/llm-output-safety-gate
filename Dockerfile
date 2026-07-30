@@ -18,8 +18,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install -r requirements.txt
 
 ENV TORCH_HOME=/app/.cache
+ENV HF_HOME=/app/.cache/huggingface
+ENV SPACY_MODEL=en_core_web_sm
 RUN python -c "from detoxify import Detoxify; Detoxify('multilingual')"
-RUN python -m spacy download en_core_web_sm
+RUN python -m spacy download ${SPACY_MODEL}
 
 USER appuser
 

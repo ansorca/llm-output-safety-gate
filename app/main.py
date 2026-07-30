@@ -2,17 +2,27 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from app.models.models import CheckRequest, SafetyVerdict
 from app.services.toxicity import llm_output_validation
-from app.services.pii import detect_pii
+from app.services.pii import detect_pii, LoadedSpacyNlpEngine
 from detoxify import Detoxify
 import time
 from app.logger import log
 from presidio_analyzer import AnalyzerEngine
+import spacy
 import os
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Load a model a-priori
+    model = os.getenv("SPACY_MODEL", "en_core_web_sm")
+    nlp = spacy.load(model)
+
+    # Pass the loaded model to the new LoadedSpacyNlpEngine
+    loaded_nlp_engine = LoadedSpacyNlpEngine(loaded_spacy_model = nlp)
+
     app.state.model = Detoxify('multilingual')
-    app.state.pii_analyzer = AnalyzerEngine()
+    app.state.pii_analyzer = AnalyzerEngine(nlp_engine=loaded_nlp_engine)
     app.state.toxicity_threshold = float(os.getenv("TOXICITY_THRESHOLD", 0.5))
     yield
 
@@ -22,7 +32,7 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/health")
 def ready():
     if getattr(app.state, "model", None) is not None:
-        return {"status": "OK"}
+        return {"status": "ok"}
     raise HTTPException(status_code=503, detail="Service unavailable")
 
 @app.post("/check", response_model=SafetyVerdict)
