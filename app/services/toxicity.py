@@ -6,7 +6,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_fixed(2), # Waits 2s between retries
-    retry=retry_if_exception_type((FunctionTimedOut, Exception)),  # Retry on timeout or any other exception
+    retry=retry_if_exception_type((FunctionTimedOut, )),  # Retry on timeout
     reraise=True # Raises the original exception if all attempts fail
 )
 def llm_output_validation(model, llm_output: str):
