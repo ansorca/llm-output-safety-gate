@@ -8,3 +8,5 @@ detoxify==0.5.2
 presidio-analyzer==2.2.363
 httpx2==2.9.1
 spacy==3.8.7
+tenacity==9.1.4
+func-timeout==4.3.5
