@@ -7,3 +7,4 @@ __pycache__
 CONTEXT.md
 EVAL.md
 CLAUDE.local.md
+.claude/settings.local.json
