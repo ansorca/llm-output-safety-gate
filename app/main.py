@@ -3,8 +3,9 @@ from contextlib import asynccontextmanager
 import spacy
 from detoxify import Detoxify
 from presidio_analyzer import AnalyzerEngine
-from fastapi import FastAPI
-
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from app.services.toxicity import ToxicityModelTimeout
 
 from app.config.settings import settings
 from app.routers import check, health
@@ -25,3 +26,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(health.router)
 app.include_router(check.router)
+
+@app.exception_handler(ToxicityModelTimeout)
+async def timeout_handler(request: Request, exc: ToxicityModelTimeout):
+    return JSONResponse(
+        status_code=504,
+        content={"detail": "Upstream dependency timed out"},
+    )

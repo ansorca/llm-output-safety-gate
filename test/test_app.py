@@ -1,8 +1,8 @@
 from unittest.mock import patch
-from urllib import response
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from func_timeout import  FunctionTimedOut
 
 @pytest.fixture(scope="session")
 def client():
@@ -186,6 +186,7 @@ def test_person_name_detection(client):
     latency = response.json()["latency_ms"]
     assert latency >= 0  # Ensure latency is a non-negative value
     assert response.status_code == 200
+    assert "PERSON" in response.json()["flags"]
     assert response.json()["safe"] == False  # Person name present should be flagged as unsafe
 
 def test_location_detection(client):
@@ -210,10 +211,10 @@ def test_two_email_addresses_detection(client):
     latency = response.json()["latency_ms"]
     assert latency >= 0  # Ensure latency is a non-negative value
     assert response.status_code == 200
+    assert "EMAIL_ADDRESS" in response.json()["flags"]
     assert response.json()["safe"] == False  # Two email addresses present should be flagged as unsafe
 
 def test_score_exactly_on_threshold_is_flagged(client):
-    
     with patch('app.services.verdict.llm_output_validation') as mock_predict:
         # Mock the predict method to return a score exactly equal to the threshold
         mock_predict.return_value = {'toxicity': app.state.toxicity_threshold}
@@ -224,4 +225,23 @@ def test_score_exactly_on_threshold_is_flagged(client):
         assert latency >= 0  # Ensure latency is a non-negative value
         assert response.status_code == 200
         # Assuming the model returns a score exactly equal to the threshold for this input
-        assert response.json()["safe"] == False  # Input with score exactly on threshold should be flagged as unsafeS
+        assert response.json()["safe"] == False  # Input with score exactly on threshold should be flagged as unsafe
+
+def test_model_timeout_handling(client):
+    with patch('app.services.toxicity.func_timeout') as mock_predict:
+        mock_predict.side_effect = FunctionTimedOut
+        timeout_text = "This input will cause a timeout."
+        response = client.post("/check", json={"text": timeout_text})
+        assert response.status_code == 504  # Expecting a timeout response
+        assert response.json()["detail"] == "Upstream dependency timed out"
+        assert mock_predict.call_count == 3 
+
+def test_slow_model_timeout_handling(client):
+    with patch('app.services.toxicity.func_timeout') as mock_predict:
+        mock_predict.side_effect = [FunctionTimedOut, FunctionTimedOut, {"toxicity": 0.1}]  # First two calls timeout, third call succeeds
+        timeout_text = "This input is slow."
+        response = client.post("/check", json={"text": timeout_text})
+        latency = response.json()["latency_ms"]
+        assert latency >= 0  # Ensure latency is a non-negative value
+        assert response.status_code == 200  # Expecting a correct response after retries
+        assert mock_predict.call_count == 3 
