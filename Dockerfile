@@ -25,6 +25,8 @@ RUN python -c "from detoxify import Detoxify; Detoxify('multilingual')"
 RUN python -m spacy download ${SPACY_MODEL}
 RUN python -c "import tldextract; tldextract.extract('example.com')"
 
+ RUN chown -R appuser:appuser /app/.cache
+
 USER appuser
 
 COPY . .
