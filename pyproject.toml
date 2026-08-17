@@ -1,0 +1,28 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (unused imports/vars, undefined names, etc.)
+    "I",   # isort (import ordering)
+    "UP",  # pyupgrade (modern Python idioms)
+    "B",   # flake8-bugbear (common bug patterns)
+]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["app"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+
+# Third-party ML/NLP libraries ship no type stubs; don't fail the build over that.
+[[tool.mypy.overrides]]
+module = ["detoxify.*", "presidio_analyzer.*", "spacy.*", "func_timeout.*", "tenacity.*"]
+ignore_missing_imports = true
