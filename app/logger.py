@@ -12,5 +12,4 @@ structlog.configure(
 )
 
 
-
 log = structlog.get_logger()
